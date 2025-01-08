@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle Helper</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        input, button, textarea { margin: 10px 0; }
+        textarea { width: 100%; height: 150px; }
+    </style>
+</head>
+<body>
+    <h1>Wordle Helper</h1>
+    <p>Enter your start word (5 letters):</p>
+    <input type="text" id="startWord" maxlength="5">
+    <p>Enter the feedback for your start word (0: gray, 1: yellow, 2: green):</p>
+    <input type="text" id="feedback" maxlength="5">
+    <button onclick="processInput()">Get Suggestions</button>
+    <textarea id="output" readonly></textarea>
+
+    <script>
+        let wordRankings = [];
+        let validWords = new Set();
+        let dataLoaded = false;
+
+        // Fetch word rankings data
+        Promise.all([
+            fetch('https://raw.githubusercontent.com/pankoiscrumby/WordleStuff/refs/heads/main/wordle_word_rankings.csv').then(response => response.text()),
+            fetch('https://gist.githubusercontent.com/dracos/dd0668f281e685bad51479e5acaadb93/raw/6bfa15d263d6d5b63840a8e5b64e04b382fdb079/valid-wordle-words.txt').then(response => response.text())
+        ]).then(([rankingsData, validWordsData]) => {
+            wordRankings = rankingsData.split('\n').slice(1).filter(line => line.trim() !== '').map(line => {
+                const [rank, word, score, inAnswerlist] = line.split(',');
+                return { rank: parseInt(rank), word, score: parseFloat(score), inAnswerlist };
+            });
+            validWords = new Set(validWordsData.split('\n').map(word => word.trim()));
+            dataLoaded = true;
+            console.log('Data loaded successfully. Total words:', wordRankings.length);
+        }).catch(error => {
+            console.error('Error loading data:', error);
+            document.getElementById('output').value = 'Error loading word data. Please try again later.';
+        });
+
+        function processInput() {
+            if (!dataLoaded) {
+                alert('Word data is still loading. Please wait and try again.');
+                return;
+            }
+
+            const startWord = document.getElementById('startWord').value.toLowerCase();
+            if (!isValidStartWord(startWord)) {
+                alert('Please enter a valid 5-letter word from the Wordle word list.');
+                return;
+            }
+
+            const feedback = document.getElementById('feedback').value;
+            if (!/^[012]{5}$/.test(feedback)) {
+                alert('Please enter exactly 5 digits, each being 0, 1, or 2.');
+                return;
+            }
+
+            console.log('Processing input:', startWord, feedback);
+            const filteredWords = wordRankings.filter(entry => {
+                try {
+                    return isValidWord(entry.word, startWord, feedback);
+                } catch (error) {
+                    console.error('Error processing word:', entry.word, error);
+                    return false;
+                }
+            });
+            console.log('Filtered words:', filteredWords.length);
+            const topWords = filteredWords.slice(0, 10);
+            displayResults(topWords);
+        }
+
+        function isValidStartWord(word) {
+            return word.length === 5 && validWords.has(word);
+        }
+
+        function isValidWord(word, startWord, feedback) {
+            if (!word || word.length !== 5) {
+                console.error('Invalid word:', word);
+                return false;
+            }
+            for (let i = 0; i < 5; i++) {
+                if (feedback[i] === '2' && word[i] !== startWord[i]) return false;
+                if (feedback[i] === '1' && (!word.includes(startWord[i]) || word[i] === startWord[i])) return false;
+                if (feedback[i] === '0' && word.includes(startWord[i])) return false;
+            }
+            return true;
+        }
+
+        function displayResults(words) {
+            const output = words.map(entry => 
+                `Rank: ${entry.rank}, Word: ${entry.word}, Score: ${entry.score}, In Answerlist: ${entry.inAnswerlist}`
+            ).join('\n');
+            document.getElementById('output').value = output || 'No matching words found.';
+            console.log('Display results:', words.length > 0 ? 'Words found' : 'No words found');
+        }
+    </script>
+</body>
+</html>
