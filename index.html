@@ -30,6 +30,7 @@
 <body>
     <h1>Wordle Helper (Hard Mode)</h1>
     
+    <!-- Repeat this structure for all 6 guesses -->
     <div class="guess-container">
         <p>Enter your start word (5 letters):</p>
         <input type="text" id="startWord1" maxlength="5">
@@ -43,136 +44,32 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Answerlist</th>
-                    <th>Guesses Remaining</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
     </div>
 
-    <div class="guess-container">
-        <p>Enter your second guess:</p>
-        <input type="text" id="startWord2" maxlength="5">
-        <p>Enter the feedback:</p>
-        <input type="text" id="feedback2" maxlength="5">
-        <button onclick="processInput(2)">Get Suggestions</button>
-        <table id="output2" class="result-table">
-            <thead>
-                <tr>
-                    <th>Word</th>
-                    <th>Rank</th>
-                    <th>Score</th>
-                    <th>In Answerlist</th>
-                    <th>Guesses Remaining</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
-    <div class="guess-container">
-        <p>Enter your third guess:</p>
-        <input type="text" id="startWord3" maxlength="5">
-        <p>Enter the feedback:</p>
-        <input type="text" id="feedback3" maxlength="5">
-        <button onclick="processInput(3)">Get Suggestions</button>
-        <table id="output3" class="result-table">
-            <thead>
-                <tr>
-                    <th>Word</th>
-                    <th>Rank</th>
-                    <th>Score</th>
-                    <th>In Answerlist</th>
-                    <th>Guesses Remaining</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
-    <div class="guess-container">
-        <p>Enter your fourth guess:</p>
-        <input type="text" id="startWord4" maxlength="5">
-        <p>Enter the feedback:</p>
-        <input type="text" id="feedback4" maxlength="5">
-        <button onclick="processInput(4)">Get Suggestions</button>
-        <table id="output4" class="result-table">
-            <thead>
-                <tr>
-                    <th>Word</th>
-                    <th>Rank</th>
-                    <th>Score</th>
-                    <th>In Answerlist</th>
-                    <th>Guesses Remaining</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
-    <div class="guess-container">
-        <p>Enter your fifth guess:</p>
-        <input type="text" id="startWord5" maxlength="5">
-        <p>Enter the feedback:</p>
-        <input type="text" id="feedback5" maxlength="5">
-        <button onclick="processInput(5)">Get Suggestions</button>
-        <table id="output5" class="result-table">
-            <thead>
-                <tr>
-                    <th>Word</th>
-                    <th>Rank</th>
-                    <th>Score</th>
-                    <th>In Answerlist</th>
-                    <th>Guesses Remaining</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
-    <div class="guess-container">
-        <p>Enter your sixth guess:</p>
-        <input type="text" id="startWord6" maxlength="5">
-        <p>Enter the feedback:</p>
-        <input type="text" id="feedback6" maxlength="5">
-        <button onclick="processInput(6)">Get Suggestions</button>
-        <table id="output6" class="result-table">
-            <thead>
-                <tr>
-                    <th>Word</th>
-                    <th>Rank</th>
-                    <th>Score</th>
-                    <th>In Answerlist</th>
-                    <th>Guesses Remaining</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
+    <!-- Repeat for guesses 2-6 -->
 
     <script>
         let wordRankings = [];
-        let validWords = new Set();
-        let answerList = [];
         let dataLoaded = false;
 
         // Fetch word rankings data
-        Promise.all([
-            fetch('https://raw.githubusercontent.com/pankoiscrumby/WordleStuff/refs/heads/main/wordle_word_rankings.csv').then(response => response.text()),
-            fetch('https://raw.githubusercontent.com/pankoiscrumby/WordleStuff/refs/heads/main/answerlist.txt').then(response => response.text())
-        ]).then(([rankingsData, answerListData]) => {
-            wordRankings = rankingsData.split('\n').slice(1).filter(line => line.trim() !== '').map(line => {
-                const [rank, word, score, inAnswerlist] = line.split(',');
-                return { rank: parseInt(rank), word, score: parseFloat(score), inAnswerlist };
+        fetch('https://raw.githubusercontent.com/pankoiscrumby/WordleStuff/refs/heads/main/wordle_word_rankings.csv')
+            .then(response => response.text())
+            .then(rankingsData => {
+                wordRankings = rankingsData.split('\n').slice(1).filter(line => line.trim() !== '').map(line => {
+                    const [rank, word, score, inAnswerlist] = line.split(',');
+                    return { rank: parseInt(rank), word, score: parseFloat(score), inAnswerlist };
+                });
+                dataLoaded = true;
+                console.log('Data loaded successfully. Total words:', wordRankings.length);
+            }).catch(error => {
+                console.error('Error loading data:', error);
+                displayError('Error loading word data. Please try again later.', 1);
             });
-            answerList = new Set(answerListData.split('\n').map(word => word.trim()));
-            dataLoaded = true;
-            console.log('Data loaded successfully. Total words:', wordRankings.length);
-            console.log('Answer list loaded. Total answers:', answerList.size);
-        }).catch(error => {
-            console.error('Error loading data:', error);
-            displayError('Error loading word data. Please try again later.', 1);
-        });
 
         function processInput(guessNumber) {
             if (!dataLoaded) {
@@ -194,7 +91,7 @@
 
             try {
                 if (!isValidStartWord(startWord)) {
-                    throw new Error('Please enter a valid 5-letter word from the Wordle word list.');
+                    throw new Error('Please enter a valid 5-letter word.');
                 }
 
                 if (!/^[012]{5}$/.test(feedback)) {
@@ -217,19 +114,19 @@
                 console.log(`Processing input for guess ${guessNumber}:`, startWord, feedback);
 
                 const filteredWords = wordRankings.filter(entry => {
-                    return answerList.has(entry.word) && isValidWordForAllGuesses(entry.word, allGuesses, allFeedback);
+                    return isValidWordForAllGuesses(entry.word, allGuesses, allFeedback);
                 });
 
                 console.log('Filtered words:', filteredWords.length);
                 const topWords = filteredWords.slice(0, 20);
-                displayResults(topWords, guessNumber, allGuesses, allFeedback);
+                displayResults(topWords, guessNumber);
             } catch (error) {
                 displayError(error.message, guessNumber);
             }
         }
 
         function isValidStartWord(word) {
-            return word.length === 5 && answerList.has(word);
+            return word.length === 5;
         }
 
         function checkHardModeValidity(currentGuess, allGuesses, allFeedback) {
@@ -274,32 +171,24 @@
             return true;
         }
 
-        function calculate_remaining_guesses(suggested_word, guesses, feedbacks) {
-            return Array.from(answerList).filter(word => 
-                isValidWordForAllGuesses(word, [...guesses, suggested_word], [...feedbacks, '00000'])
-            ).length;
-        }
-
-        function displayResults(words, guessNumber, allGuesses, allFeedback) {
+        function displayResults(words, guessNumber) {
             const tableBody = document.querySelector(`#output${guessNumber} tbody`);
             tableBody.innerHTML = '';
 
             if (words.length === 0) {
                 const row = tableBody.insertRow();
                 const cell = row.insertCell();
-                cell.colSpan = 5;
+                cell.colSpan = 4;
                 cell.textContent = 'No matching words found.';
                 return;
             }
 
             words.forEach(entry => {
-                const remainingGuesses = calculate_remaining_guesses(entry.word, allGuesses, allFeedback);
                 const row = tableBody.insertRow();
                 row.insertCell().textContent = entry.word;
                 row.insertCell().textContent = entry.rank;
                 row.insertCell().textContent = entry.score;
                 row.insertCell().textContent = entry.inAnswerlist;
-                row.insertCell().textContent = remainingGuesses;
             });
 
             console.log(`Display results for guess ${guessNumber}:`, words.length > 0 ? 'Words found' : 'No words found');
@@ -310,7 +199,7 @@
             tableBody.innerHTML = '';
             const row = tableBody.insertRow();
             const cell = row.insertCell();
-            cell.colSpan = 5;
+            cell.colSpan = 4;
             cell.textContent = `Error: ${message}`;
             cell.style.color = 'red';
             console.error(`Error for guess ${guessNumber}:`, message);
