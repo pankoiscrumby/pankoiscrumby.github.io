@@ -43,6 +43,7 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Answerlist</th>
+                    <th>Guesses Remaining</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -62,6 +63,7 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Answerlist</th>
+                    <th>Guesses Remaining</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -81,6 +83,7 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Answerlist</th>
+                    <th>Guesses Remaining</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -100,6 +103,7 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Answerlist</th>
+                    <th>Guesses Remaining</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -119,6 +123,7 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Answerlist</th>
+                    <th>Guesses Remaining</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -138,12 +143,12 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Answerlist</th>
+                    <th>Guesses Remaining</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
     </div>
-
 
     <script>
         let wordRankings = [];
@@ -154,17 +159,16 @@
         // Fetch word rankings data
         Promise.all([
             fetch('https://raw.githubusercontent.com/pankoiscrumby/WordleStuff/refs/heads/main/wordle_word_rankings.csv').then(response => response.text()),
-            fetch('https://gist.githubusercontent.com/dracos/dd0668f281e685bad51479e5acaadb93/raw/6bfa15d263d6d5b63840a8e5b64e04b382fdb079/valid-wordle-words.txt').then(response => response.text()),
             fetch('https://raw.githubusercontent.com/pankoiscrumby/WordleStuff/refs/heads/main/answerlist.txt').then(response => response.text())
-        ]).then(([rankingsData, validWordsData, answerListData]) => {
+        ]).then(([rankingsData, answerListData]) => {
             wordRankings = rankingsData.split('\n').slice(1).filter(line => line.trim() !== '').map(line => {
                 const [rank, word, score, inAnswerlist] = line.split(',');
                 return { rank: parseInt(rank), word, score: parseFloat(score), inAnswerlist };
             });
-            validWords = new Set(validWordsData.split('\n').map(word => word.trim()));
-            answerList = answerListData.split('\n').map(word => word.trim());
+            answerList = new Set(answerListData.split('\n').map(word => word.trim()));
             dataLoaded = true;
             console.log('Data loaded successfully. Total words:', wordRankings.length);
+            console.log('Answer list loaded. Total answers:', answerList.size);
         }).catch(error => {
             console.error('Error loading data:', error);
             displayError('Error loading word data. Please try again later.', 1);
@@ -213,19 +217,19 @@
                 console.log(`Processing input for guess ${guessNumber}:`, startWord, feedback);
 
                 const filteredWords = wordRankings.filter(entry => {
-                    return isValidWordForAllGuesses(entry.word, allGuesses, allFeedback);
+                    return answerList.has(entry.word) && isValidWordForAllGuesses(entry.word, allGuesses, allFeedback);
                 });
 
                 console.log('Filtered words:', filteredWords.length);
                 const topWords = filteredWords.slice(0, 20);
-                displayResults(topWords, guessNumber);
+                displayResults(topWords, guessNumber, allGuesses, allFeedback);
             } catch (error) {
                 displayError(error.message, guessNumber);
             }
         }
 
         function isValidStartWord(word) {
-            return word.length === 5 && validWords.has(word);
+            return word.length === 5 && answerList.has(word);
         }
 
         function checkHardModeValidity(currentGuess, allGuesses, allFeedback) {
@@ -276,24 +280,32 @@
             return true;
         }
 
-        function displayResults(words, guessNumber) {
+        function calculate_remaining_guesses(suggested_word, guesses, feedbacks) {
+            return Array.from(answerList).filter(word => 
+                isValidWordForAllGuesses(word, [...guesses, suggested_word], [...feedbacks, '00000'])
+            ).length;
+        }
+
+        function displayResults(words, guessNumber, allGuesses, allFeedback) {
             const tableBody = document.querySelector(`#output${guessNumber} tbody`);
             tableBody.innerHTML = '';
 
             if (words.length === 0) {
                 const row = tableBody.insertRow();
                 const cell = row.insertCell();
-                cell.colSpan = 4;
+                cell.colSpan = 5;
                 cell.textContent = 'No matching words found.';
                 return;
             }
 
             words.forEach(entry => {
+                const remainingGuesses = calculate_remaining_guesses(entry.word, allGuesses, allFeedback);
                 const row = tableBody.insertRow();
                 row.insertCell().textContent = entry.word;
                 row.insertCell().textContent = entry.rank;
                 row.insertCell().textContent = entry.score;
                 row.insertCell().textContent = entry.inAnswerlist;
+                row.insertCell().textContent = remainingGuesses;
             });
 
             console.log(`Display results for guess ${guessNumber}:`, words.length > 0 ? 'Words found' : 'No words found');
@@ -304,7 +316,7 @@
             tableBody.innerHTML = '';
             const row = tableBody.insertRow();
             const cell = row.insertCell();
-            cell.colSpan = 4;
+            cell.colSpan = 5;
             cell.textContent = `Error: ${message}`;
             cell.style.color = 'red';
             console.error(`Error for guess ${guessNumber}:`, message);
