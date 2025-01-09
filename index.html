@@ -25,9 +25,6 @@
         .result-table tr:nth-child(even) {
             background-color: #f9f9f9;
         }
-        .green { color: green; font-weight: bold;}
-        .yellow { color: orange; font-weight: bold;}
-        .gray { color: red; font-weight: bold;}
     </style>
 </head>
 <body>
@@ -46,8 +43,6 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Ans</th>
-                    <th>Used</th>
-                    <th>Unused</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -67,8 +62,6 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Ans</th>
-                    <th>Used</th>
-                    <th>Unused</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -88,8 +81,6 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Ans</th>
-                    <th>Used</th>
-                    <th>Unused</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -109,8 +100,6 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Ans</th>
-                    <th>Used</th>
-                    <th>Unused</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -130,8 +119,6 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Ans</th>
-                    <th>Used</th>
-                    <th>Unused</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -151,8 +138,6 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Ans</th>
-                    <th>Used</th>
-                    <th>Unused</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -226,7 +211,7 @@
 
                 console.log('Filtered words:', filteredWords.length);
                 const topWords = filteredWords.slice(0, 20);
-                displayResults(topWords, guessNumber, allGuesses, allFeedback);
+                displayResults(topWords, guessNumber);
             } catch (error) {
                 displayError(error.message, guessNumber);
             }
@@ -278,58 +263,26 @@
             return true;
         }
 
-        function displayResults(words, guessNumber, allGuesses, allFeedback) {
+        function displayResults(words, guessNumber) {
             const tableBody = document.querySelector(`#output${guessNumber} tbody`);
             tableBody.innerHTML = '';
-        
-            // Collect all used letters and their statuses from previous guesses
-            const letterStatus = {};
-            allGuesses.forEach((guess, index) => {
-                guess.split('').forEach((letter, i) => {
-                    const status = allFeedback[index][i];
-                    if (status === '2') letterStatus[letter] = 'green';
-                    else if (status === '1' && letterStatus[letter] !== 'green') letterStatus[letter] = 'yellow';
-                    else if (status === '0' && !letterStatus[letter]) letterStatus[letter] = 'gray';
-                });
-            });
-        
+
             if (words.length === 0) {
                 const row = tableBody.insertRow();
                 const cell = row.insertCell();
-                cell.colSpan = 6;
+                cell.colSpan = 4;
                 cell.textContent = 'No matching words found.';
                 return;
             }
-        
+
             words.forEach(entry => {
                 const row = tableBody.insertRow();
                 row.insertCell().textContent = entry.word;
                 row.insertCell().textContent = entry.rank;
                 row.insertCell().textContent = entry.score;
                 row.insertCell().textContent = entry.inAnswerlist;
-                
-                // Used letters
-                const usedCell = row.insertCell();
-                const unusedCell = row.insertCell();
-                
-                'abcdefghijklmnopqrstuvwxyz'.split('').forEach(letter => {
-                    const span = document.createElement('span');
-                    span.textContent = letter;
-                    
-                    if (letterStatus[letter]) {
-                        span.className = letterStatus[letter];
-                        usedCell.appendChild(span);
-                        usedCell.appendChild(document.createTextNode(' '));
-                    } else if (entry.word.includes(letter)) {
-                        usedCell.appendChild(span);
-                        usedCell.appendChild(document.createTextNode(' '));
-                    } else {
-                        unusedCell.appendChild(span);
-                        unusedCell.appendChild(document.createTextNode(' '));
-                    }
-                });
             });
-        
+
             console.log(`Display results for guess ${guessNumber}:`, words.length > 0 ? 'Words found' : 'No words found');
         }
 
@@ -338,7 +291,7 @@
             tableBody.innerHTML = '';
             const row = tableBody.insertRow();
             const cell = row.insertCell();
-            cell.colSpan = 6;
+            cell.colSpan = 4;
             cell.textContent = `Error: ${message}`;
             cell.style.color = 'red';
             console.error(`Error for guess ${guessNumber}:`, message);
