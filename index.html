@@ -207,15 +207,18 @@
             return eliminated_count;
         }
 
-        function displayResults(words, guessNumber, allGuesses, allFeedback) {
-            const formattedOutput = words.map(entry => {
-                const eliminated = calculate_eliminated_words(entry.word, allGuesses, allFeedback);
-                return `Word: ${entry.word}, Rank: ${entry.rank}, Score: ${entry.score}, In Answerlist: ${entry.inAnswerlist}, Eliminates: ${eliminated} words`;
-            }).join('\n------------------------------\n');
-
-            document.getElementById(`output${guessNumber}`).value = formattedOutput || 'No matching words found.';
-            console.log(`Display results for guess ${guessNumber}:`, words.length > 0 ? 'Words found' : 'No words found');
-        }
+				function displayResults(words, guessNumber, allGuesses, allFeedback) {
+				    const formattedOutput = words.map(entry => {
+				        const eliminated = calculate_eliminated_words(entry.word, allGuesses, allFeedback);
+				        return `Word: ${entry.word}, Rank: ${entry.rank}, Score: ${entry.score}, In Answerlist: ${entry.inAnswerlist}, Eliminates: ${eliminated} words`;
+				    }).join('\n------------------------------\n');
+				
+				    const outputElement = document.getElementById(`output${guessNumber}`);
+				    outputElement.value = formattedOutput || 'No matching words found.';
+				    outputElement.style.whiteSpace = 'pre-wrap';
+				    outputElement.style.wordBreak = 'break-word';
+				    console.log(`Display results for guess ${guessNumber}:`, words.length > 0 ? 'Words found' : 'No words found');
+				}
 
         function displayError(message, guessNumber) {
             document.getElementById(`output${guessNumber}`).value = `Error: ${message}`;
