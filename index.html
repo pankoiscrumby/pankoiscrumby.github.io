@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wordle Helper</title>
+    <title>Wordle Helper (Hard Mode)</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         input, button, textarea { margin: 10px 0; }
         textarea { width: 100%; height: 150px; }
         .guess-container { margin-bottom: 20px; }
+        .error { color: red; }
     </style>
 </head>
 <body>
-    <h1>Wordle Helper</h1>
+    <h1>Wordle Helper (Hard Mode)</h1>
     
     <div class="guess-container">
         <p>Enter your start word (5 letters):</p>
@@ -71,18 +72,21 @@
     <script>
         let wordRankings = [];
         let validWords = new Set();
+        let answerList = [];
         let dataLoaded = false;
 
         // Fetch word rankings data
         Promise.all([
             fetch('https://raw.githubusercontent.com/pankoiscrumby/WordleStuff/refs/heads/main/wordle_word_rankings.csv').then(response => response.text()),
-            fetch('https://gist.githubusercontent.com/dracos/dd0668f281e685bad51479e5acaadb93/raw/6bfa15d263d6d5b63840a8e5b64e04b382fdb079/valid-wordle-words.txt').then(response => response.text())
-        ]).then(([rankingsData, validWordsData]) => {
+            fetch('https://gist.githubusercontent.com/dracos/dd0668f281e685bad51479e5acaadb93/raw/6bfa15d263d6d5b63840a8e5b64e04b382fdb079/valid-wordle-words.txt').then(response => response.text()),
+            fetch('https://raw.githubusercontent.com/pankoiscrumby/WordleStuff/refs/heads/main/answerlist.txt').then(response => response.text())
+        ]).then(([rankingsData, validWordsData, answerListData]) => {
             wordRankings = rankingsData.split('\n').slice(1).filter(line => line.trim() !== '').map(line => {
                 const [rank, word, score, inAnswerlist] = line.split(',');
                 return { rank: parseInt(rank), word, score: parseFloat(score), inAnswerlist };
             });
             validWords = new Set(validWordsData.split('\n').map(word => word.trim()));
+            answerList = answerListData.split('\n').map(word => word.trim());
             dataLoaded = true;
             console.log('Data loaded successfully. Total words:', wordRankings.length);
         }).catch(error => {
@@ -97,42 +101,60 @@
             }
 
             const startWord = document.getElementById(`startWord${guessNumber}`).value.toLowerCase();
-            if (!isValidStartWord(startWord)) {
-                alert('Please enter a valid 5-letter word from the Wordle word list.');
-                return;
-            }
-
             const feedback = document.getElementById(`feedback${guessNumber}`).value;
-            if (!/^[012]{5}$/.test(feedback)) {
-                alert('Please enter exactly 5 digits, each being 0, 1, or 2.');
-                return;
-            }
 
-            console.log(`Processing input for guess ${guessNumber}:`, startWord, feedback);
-            
-            // Collect all previous guesses and feedback
-            let allGuesses = [];
-            let allFeedback = [];
-            for (let i = 1; i <= guessNumber; i++) {
-                allGuesses.push(document.getElementById(`startWord${i}`).value.toLowerCase());
-                allFeedback.push(document.getElementById(`feedback${i}`).value);
-            }
-
-            const filteredWords = wordRankings.filter(entry => {
-                try {
-                    return isValidWordForAllGuesses(entry.word, allGuesses, allFeedback);
-                } catch (error) {
-                    console.error('Error processing word:', entry.word, error);
-                    return false;
+            try {
+                if (!isValidStartWord(startWord)) {
+                    throw new Error('Please enter a valid 5-letter word from the Wordle word list.');
                 }
-            });
-            console.log('Filtered words:', filteredWords.length);
-            const topWords = filteredWords.slice(0, 7);
-            displayResults(topWords, guessNumber);
+
+                if (!/^[012]{5}$/.test(feedback)) {
+                    throw new Error('Please enter exactly 5 digits, each being 0, 1, or 2.');
+                }
+
+                // Collect all previous guesses and feedback
+                let allGuesses = [];
+                let allFeedback = [];
+                for (let i = 1; i <= guessNumber; i++) {
+                    allGuesses.push(document.getElementById(`startWord${i}`).value.toLowerCase());
+                    allFeedback.push(document.getElementById(`feedback${i}`).value);
+                }
+
+                // Check if the current guess is valid based on previous guesses (Hard Mode)
+                if (guessNumber > 1) {
+                    checkHardModeValidity(startWord, allGuesses, allFeedback);
+                }
+
+                console.log(`Processing input for guess ${guessNumber}:`, startWord, feedback);
+
+                const filteredWords = wordRankings.filter(entry => {
+                    return isValidWordForAllGuesses(entry.word, allGuesses, allFeedback);
+                });
+
+                console.log('Filtered words:', filteredWords.length);
+                const topWords = filteredWords.slice(0, 7);
+                displayResults(topWords, guessNumber);
+            } catch (error) {
+                displayError(error.message, guessNumber);
+            }
         }
 
         function isValidStartWord(word) {
             return word.length === 5 && validWords.has(word);
+        }
+
+        function checkHardModeValidity(currentGuess, allGuesses, allFeedback) {
+            const previousGuess = allGuesses[allGuesses.length - 2];
+            const previousFeedback = allFeedback[allFeedback.length - 2];
+
+            for (let i = 0; i < 5; i++) {
+                if (previousFeedback[i] === '2' && currentGuess[i] !== previousGuess[i]) {
+                    throw new Error('In Hard Mode, you must use green letters in the same position.');
+                }
+                if (previousFeedback[i] === '1' && !currentGuess.includes(previousGuess[i])) {
+                    throw new Error('In Hard Mode, you must use yellow letters in your next guess.');
+                }
+            }
         }
 
         function isValidWordForAllGuesses(word, guesses, feedbacks) {
@@ -149,20 +171,62 @@
         }
 
         function isValidWordForGuess(word, guess, feedback) {
+            let remainingLetters = word.split('');
             for (let i = 0; i < 5; i++) {
-                if (feedback[i] === '2' && word[i] !== guess[i]) return false;
-                if (feedback[i] === '1' && (!word.includes(guess[i]) || word[i] === guess[i])) return false;
-                if (feedback[i] === '0' && word.includes(guess[i])) return false;
+                if (feedback[i] === '2') {
+                    if (word[i] !== guess[i]) return false;
+                    remainingLetters[i] = '';
+                }
+            }
+            for (let i = 0; i < 5; i++) {
+                if (feedback[i] === '1') {
+                    if (word[i] === guess[i]) return false;
+                    const index = remainingLetters.indexOf(guess[i]);
+                    if (index === -1) return false;
+                    remainingLetters[index] = '';
+                } else if (feedback[i] === '0') {
+                    if (remainingLetters.includes(guess[i])) return false;
+                }
             }
             return true;
         }
 
+        function calculate_eliminated_words(suggested_word, guesses, feedbacks) {
+            let eliminated_count = 0;
+            for (let word of answerList) {
+                for (let i = 0; i < guesses.length; i++) {
+                    if (!isValidWordForGuess(word, guesses[i], feedbacks[i])) {
+                        eliminated_count++;
+                        break;
+                    }
+                }
+                if (!isValidWordForGuess(word, suggested_word, '00000')) {
+                    eliminated_count++;
+                }
+            }
+            return eliminated_count;
+        }
+
         function displayResults(words, guessNumber) {
-            const output = words.map(entry => 
-                `Rank: ${entry.rank}, Word: ${entry.word}, Score: ${entry.score}, In Answerlist: ${entry.inAnswerlist}`
-            ).join('\n');
+            let allGuesses = [];
+            let allFeedback = [];
+            for (let i = 1; i <= guessNumber; i++) {
+                allGuesses.push(document.getElementById(`startWord${i}`).value.toLowerCase());
+                allFeedback.push(document.getElementById(`feedback${i}`).value);
+            }
+
+            const output = words.map(entry => {
+                const eliminated = calculate_eliminated_words(entry.word, allGuesses, allFeedback);
+                return `Rank: ${entry.rank}, Word: ${entry.word}, Score: ${entry.score}, In Answerlist: ${entry.inAnswerlist}, Eliminates: ${eliminated} words`;
+            }).join('\n');
+
             document.getElementById(`output${guessNumber}`).value = output || 'No matching words found.';
             console.log(`Display results for guess ${guessNumber}:`, words.length > 0 ? 'Words found' : 'No words found');
+        }
+
+        function displayError(message, guessNumber) {
+            document.getElementById(`output${guessNumber}`).value = `Error: ${message}`;
+            console.error(`Error for guess ${guessNumber}:`, message);
         }
     </script>
 </body>
