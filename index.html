@@ -29,7 +29,25 @@
 </head>
 <body>
     <h1>Wordle Helper (Hard Mode)</h1>
-    
+
+    <div class="explanation">
+        <h2>How to Use This Wordle Helper</h2>
+        <p>This tool assists you in playing Wordle in Hard Mode. Here's how to use it:</p>
+        <ol>
+            <li>Enter your first 5-letter guess in the first input box.</li>
+            <li>Enter the feedback you received from Wordle in the second input box:
+                <ul>
+                    <li>Use '0' for gray tiles (letter not in the word)</li>
+                    <li>Use '1' for yellow tiles (letter in the word but wrong position)</li>
+                    <li>Use '2' for green tiles (letter in the correct position)</li>
+                </ul>
+            </li>
+            <li>Click "Get Suggestions" to see a list of possible words for your next guess.</li>
+            <li>Repeat steps 1-3 for subsequent guesses, using the next set of input boxes each time.</li>
+        </ol>
+        <p>The tool will show you up to 20 suggested words for each guess, along with their rank, score, and whether they're in the possible answer list. It follows Wordle's Hard Mode rules, ensuring that all revealed hints are used in subsequent guesses.</p>
+    </div>
+
     <div class="guess-container">
         <p>Enter your start word (5 letters):</p>
         <input type="text" id="startWord1" maxlength="5">
