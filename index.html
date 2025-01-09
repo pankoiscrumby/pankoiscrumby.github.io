@@ -281,7 +281,7 @@
         function displayResults(words, guessNumber, allGuesses, allFeedback) {
             const tableBody = document.querySelector(`#output${guessNumber} tbody`);
             tableBody.innerHTML = '';
-
+        
             // Collect all used letters and their statuses from previous guesses
             const letterStatus = {};
             allGuesses.forEach((guess, index) => {
@@ -292,7 +292,7 @@
                     else if (status === '0' && !letterStatus[letter]) letterStatus[letter] = 'gray';
                 });
             });
-
+        
             if (words.length === 0) {
                 const row = tableBody.insertRow();
                 const cell = row.insertCell();
@@ -300,7 +300,7 @@
                 cell.textContent = 'No matching words found.';
                 return;
             }
-
+        
             words.forEach(entry => {
                 const row = tableBody.insertRow();
                 row.insertCell().textContent = entry.word;
@@ -310,26 +310,26 @@
                 
                 // Used letters
                 const usedCell = row.insertCell();
-                Object.entries(letterStatus).forEach(([letter, status]) => {
+                const unusedCell = row.insertCell();
+                
+                'abcdefghijklmnopqrstuvwxyz'.split('').forEach(letter => {
                     const span = document.createElement('span');
                     span.textContent = letter;
-                    span.className = status;
-                    usedCell.appendChild(span);
-                    usedCell.appendChild(document.createTextNode(' '));
-                });
-
-                // Unused letters
-                const unusedCell = row.insertCell();
-                'abcdefghijklmnopqrstuvwxyz'.split('').forEach(letter => {
-                    if (!letterStatus[letter]) {
-                        const span = document.createElement('span');
-                        span.textContent = letter;
+                    
+                    if (letterStatus[letter]) {
+                        span.className = letterStatus[letter];
+                        usedCell.appendChild(span);
+                        usedCell.appendChild(document.createTextNode(' '));
+                    } else if (entry.word.includes(letter)) {
+                        usedCell.appendChild(span);
+                        usedCell.appendChild(document.createTextNode(' '));
+                    } else {
                         unusedCell.appendChild(span);
                         unusedCell.appendChild(document.createTextNode(' '));
                     }
                 });
             });
-
+        
             console.log(`Display results for guess ${guessNumber}:`, words.length > 0 ? 'Words found' : 'No words found');
         }
 
