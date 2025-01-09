@@ -3,21 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wordle Helper - Second Guessing</title>
+    <title>Wordle Helper</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         input, button, textarea { margin: 10px 0; }
         textarea { width: 100%; height: 150px; }
+        .guess-container { margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <h1>Wordle Helper - Second Guessing</h1>
-    <p>Enter your start word (5 letters):</p>
-    <input type="text" id="startWord" maxlength="5">
-    <p>Enter the feedback for your start word (0: gray, 1: yellow, 2: green):</p>
-    <input type="text" id="feedback" maxlength="5">
-    <button onclick="processInput()">Get Suggestions</button>
-    <textarea id="output" readonly></textarea>
+    <h1>Wordle Helper</h1>
+    
+    <div class="guess-container">
+        <p>Enter your start word (5 letters):</p>
+        <input type="text" id="startWord1" maxlength="5">
+        <p>Enter the feedback (0: gray, 1: yellow, 2: green):</p>
+        <input type="text" id="feedback1" maxlength="5">
+        <button onclick="processInput(1)">Get Suggestions</button>
+        <textarea id="output1" readonly></textarea>
+    </div>
+
+    <div class="guess-container">
+        <p>Enter your second guess:</p>
+        <input type="text" id="startWord2" maxlength="5">
+        <p>Enter the feedback:</p>
+        <input type="text" id="feedback2" maxlength="5">
+        <button onclick="processInput(2)">Get Suggestions</button>
+        <textarea id="output2" readonly></textarea>
+    </div>
+
+    <div class="guess-container">
+        <p>Enter your third guess:</p>
+        <input type="text" id="startWord3" maxlength="5">
+        <p>Enter the feedback:</p>
+        <input type="text" id="feedback3" maxlength="5">
+        <button onclick="processInput(3)">Get Suggestions</button>
+        <textarea id="output3" readonly></textarea>
+    </div>
+
+    <div class="guess-container">
+        <p>Enter your fourth guess:</p>
+        <input type="text" id="startWord4" maxlength="5">
+        <p>Enter the feedback:</p>
+        <input type="text" id="feedback4" maxlength="5">
+        <button onclick="processInput(4)">Get Suggestions</button>
+        <textarea id="output4" readonly></textarea>
+    </div>
+
+    <div class="guess-container">
+        <p>Enter your fifth guess:</p>
+        <input type="text" id="startWord5" maxlength="5">
+        <p>Enter the feedback:</p>
+        <input type="text" id="feedback5" maxlength="5">
+        <button onclick="processInput(5)">Get Suggestions</button>
+        <textarea id="output5" readonly></textarea>
+    </div>
+
+    <div class="guess-container">
+        <p>Enter your sixth guess:</p>
+        <input type="text" id="startWord6" maxlength="5">
+        <p>Enter the feedback:</p>
+        <input type="text" id="feedback6" maxlength="5">
+        <button onclick="processInput(6)">Get Suggestions</button>
+        <textarea id="output6" readonly></textarea>
+    </div>
 
     <script>
         let wordRankings = [];
@@ -38,64 +87,82 @@
             console.log('Data loaded successfully. Total words:', wordRankings.length);
         }).catch(error => {
             console.error('Error loading data:', error);
-            document.getElementById('output').value = 'Error loading word data. Please try again later.';
+            document.getElementById('output1').value = 'Error loading word data. Please try again later.';
         });
 
-        function processInput() {
+        function processInput(guessNumber) {
             if (!dataLoaded) {
                 alert('Word data is still loading. Please wait and try again.');
                 return;
             }
 
-            const startWord = document.getElementById('startWord').value.toLowerCase();
+            const startWord = document.getElementById(`startWord${guessNumber}`).value.toLowerCase();
             if (!isValidStartWord(startWord)) {
                 alert('Please enter a valid 5-letter word from the Wordle word list.');
                 return;
             }
 
-            const feedback = document.getElementById('feedback').value;
+            const feedback = document.getElementById(`feedback${guessNumber}`).value;
             if (!/^[012]{5}$/.test(feedback)) {
                 alert('Please enter exactly 5 digits, each being 0, 1, or 2.');
                 return;
             }
 
-            console.log('Processing input:', startWord, feedback);
+            console.log(`Processing input for guess ${guessNumber}:`, startWord, feedback);
+            
+            // Collect all previous guesses and feedback
+            let allGuesses = [];
+            let allFeedback = [];
+            for (let i = 1; i <= guessNumber; i++) {
+                allGuesses.push(document.getElementById(`startWord${i}`).value.toLowerCase());
+                allFeedback.push(document.getElementById(`feedback${i}`).value);
+            }
+
             const filteredWords = wordRankings.filter(entry => {
                 try {
-                    return isValidWord(entry.word, startWord, feedback);
+                    return isValidWordForAllGuesses(entry.word, allGuesses, allFeedback);
                 } catch (error) {
                     console.error('Error processing word:', entry.word, error);
                     return false;
                 }
             });
             console.log('Filtered words:', filteredWords.length);
-            const topWords = filteredWords.slice(0, 10);
-            displayResults(topWords);
+            const topWords = filteredWords.slice(0, 7);
+            displayResults(topWords, guessNumber);
         }
 
         function isValidStartWord(word) {
             return word.length === 5 && validWords.has(word);
         }
 
-        function isValidWord(word, startWord, feedback) {
+        function isValidWordForAllGuesses(word, guesses, feedbacks) {
             if (!word || word.length !== 5) {
                 console.error('Invalid word:', word);
                 return false;
             }
-            for (let i = 0; i < 5; i++) {
-                if (feedback[i] === '2' && word[i] !== startWord[i]) return false;
-                if (feedback[i] === '1' && (!word.includes(startWord[i]) || word[i] === startWord[i])) return false;
-                if (feedback[i] === '0' && word.includes(startWord[i])) return false;
+            for (let i = 0; i < guesses.length; i++) {
+                if (!isValidWordForGuess(word, guesses[i], feedbacks[i])) {
+                    return false;
+                }
             }
             return true;
         }
 
-        function displayResults(words) {
+        function isValidWordForGuess(word, guess, feedback) {
+            for (let i = 0; i < 5; i++) {
+                if (feedback[i] === '2' && word[i] !== guess[i]) return false;
+                if (feedback[i] === '1' && (!word.includes(guess[i]) || word[i] === guess[i])) return false;
+                if (feedback[i] === '0' && word.includes(guess[i])) return false;
+            }
+            return true;
+        }
+
+        function displayResults(words, guessNumber) {
             const output = words.map(entry => 
                 `Rank: ${entry.rank}, Word: ${entry.word}, Score: ${entry.score}, In Answerlist: ${entry.inAnswerlist}`
             ).join('\n');
-            document.getElementById('output').value = output || 'No matching words found.';
-            console.log('Display results:', words.length > 0 ? 'Words found' : 'No words found');
+            document.getElementById(`output${guessNumber}`).value = output || 'No matching words found.';
+            console.log(`Display results for guess ${guessNumber}:`, words.length > 0 ? 'Words found' : 'No words found');
         }
     </script>
 </body>
