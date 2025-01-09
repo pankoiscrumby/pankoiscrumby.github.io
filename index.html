@@ -30,7 +30,6 @@
 <body>
     <h1>Wordle Helper (Hard Mode)</h1>
     
-    <!-- Repeat this structure for all 6 guesses -->
     <div class="guess-container">
         <p>Enter your start word (5 letters):</p>
         <input type="text" id="startWord1" maxlength="5">
@@ -50,7 +49,101 @@
         </table>
     </div>
 
-    <!-- Repeat for guesses 2-6 -->
+    <div class="guess-container">
+        <p>Enter your second guess:</p>
+        <input type="text" id="startWord2" maxlength="5">
+        <p>Enter the feedback:</p>
+        <input type="text" id="feedback2" maxlength="5">
+        <button onclick="processInput(2)">Get Suggestions</button>
+        <table id="output2" class="result-table">
+            <thead>
+                <tr>
+                    <th>Word</th>
+                    <th>Rank</th>
+                    <th>Score</th>
+                    <th>In Answerlist</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="guess-container">
+        <p>Enter your third guess:</p>
+        <input type="text" id="startWord3" maxlength="5">
+        <p>Enter the feedback:</p>
+        <input type="text" id="feedback3" maxlength="5">
+        <button onclick="processInput(3)">Get Suggestions</button>
+        <table id="output3" class="result-table">
+            <thead>
+                <tr>
+                    <th>Word</th>
+                    <th>Rank</th>
+                    <th>Score</th>
+                    <th>In Answerlist</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="guess-container">
+        <p>Enter your fourth guess:</p>
+        <input type="text" id="startWord4" maxlength="5">
+        <p>Enter the feedback:</p>
+        <input type="text" id="feedback4" maxlength="5">
+        <button onclick="processInput(4)">Get Suggestions</button>
+        <table id="output4" class="result-table">
+            <thead>
+                <tr>
+                    <th>Word</th>
+                    <th>Rank</th>
+                    <th>Score</th>
+                    <th>In Answerlist</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="guess-container">
+        <p>Enter your fifth guess:</p>
+        <input type="text" id="startWord5" maxlength="5">
+        <p>Enter the feedback:</p>
+        <input type="text" id="feedback5" maxlength="5">
+        <button onclick="processInput(5)">Get Suggestions</button>
+        <table id="output5" class="result-table">
+            <thead>
+                <tr>
+                    <th>Word</th>
+                    <th>Rank</th>
+                    <th>Score</th>
+                    <th>In Answerlist</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="guess-container">
+        <p>Enter your sixth guess:</p>
+        <input type="text" id="startWord6" maxlength="5">
+        <p>Enter the feedback:</p>
+        <input type="text" id="feedback6" maxlength="5">
+        <button onclick="processInput(6)">Get Suggestions</button>
+        <table id="output6" class="result-table">
+            <thead>
+                <tr>
+                    <th>Word</th>
+                    <th>Rank</th>
+                    <th>Score</th>
+                    <th>In Answerlist</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
 
     <script>
         let wordRankings = [];
