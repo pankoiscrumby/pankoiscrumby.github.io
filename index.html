@@ -43,7 +43,7 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Answerlist</th>
-                    <th>Eliminates</th>
+                    <th>Words Remaining</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -63,7 +63,7 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Answerlist</th>
-                    <th>Eliminates</th>
+                    <th>Words Remaining</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -83,7 +83,7 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Answerlist</th>
-                    <th>Eliminates</th>
+                    <th>Words Remaining</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -103,7 +103,7 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Answerlist</th>
-                    <th>Eliminates</th>
+                    <th>Words Remaining</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -123,7 +123,7 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Answerlist</th>
-                    <th>Eliminates</th>
+                    <th>Words Remaining</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -143,7 +143,7 @@
                     <th>Rank</th>
                     <th>Score</th>
                     <th>In Answerlist</th>
-                    <th>Eliminates</th>
+                    <th>Words Remaining</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -179,6 +179,15 @@
             if (!dataLoaded) {
                 alert('Word data is still loading. Please wait and try again.');
                 return;
+            }
+
+            if (guessNumber > 1) {
+                for (let i = 1; i < guessNumber; i++) {
+                    if (!document.getElementById(`startWord${i}`).value || !document.getElementById(`feedback${i}`).value) {
+                        alert(`Please submit guess ${i} before proceeding to guess ${guessNumber}.`);
+                        return;
+                    }
+                }
             }
 
             const startWord = document.getElementById(`startWord${guessNumber}`).value.toLowerCase();
@@ -272,7 +281,7 @@
             return true;
         }
 
-        function calculate_eliminated_words(suggested_word, guesses, feedbacks) {
+        function calculate_words_remaining(suggested_word, guesses, feedbacks) {
             function isValidWordForGuess(word, guess, feedback) {
                 let remainingLetters = word.split('');
                 for (let i = 0; i < 5; i++) {
@@ -293,24 +302,22 @@
                 }
                 return true;
             }
-        
-            // Step 1: Filter the answer list to get the remaining valid words after all previous guesses
+
             const remainingValidWords = answerList.filter(word => 
+                wordRankings.find(w => w.word === word)?.inAnswerlist === 'yes' &&
                 guesses.every((guess, index) => isValidWordForGuess(word, guess, feedbacks[index]))
             );
-        
-            // Step 2: Count how many of the remaining valid words would be eliminated by the suggested word
-            const eliminatedCount = remainingValidWords.filter(word => 
-                !isValidWordForGuess(word, suggested_word, '00000')
-            ).length;
-        
-            return eliminatedCount;
-        }
 
+            const wordsRemaining = remainingValidWords.filter(word => 
+                isValidWordForGuess(word, suggested_word, '00000')
+            ).length;
+
+            return wordsRemaining;
+        }
 
         function displayResults(words, guessNumber, allGuesses, allFeedback) {
             const tableBody = document.querySelector(`#output${guessNumber} tbody`);
-            tableBody.innerHTML = ''; // Clear previous results
+            tableBody.innerHTML = '';
 
             if (words.length === 0) {
                 const row = tableBody.insertRow();
@@ -321,13 +328,13 @@
             }
 
             words.forEach(entry => {
-                const eliminated = calculate_eliminated_words(entry.word, allGuesses, allFeedback);
+                const wordsRemaining = calculate_words_remaining(entry.word, allGuesses, allFeedback);
                 const row = tableBody.insertRow();
                 row.insertCell().textContent = entry.word;
                 row.insertCell().textContent = entry.rank;
                 row.insertCell().textContent = entry.score;
                 row.insertCell().textContent = entry.inAnswerlist;
-                row.insertCell().textContent = `${eliminated} words`;
+                row.insertCell().textContent = wordsRemaining;
             });
 
             console.log(`Display results for guess ${guessNumber}:`, words.length > 0 ? 'Words found' : 'No words found');
@@ -335,7 +342,7 @@
 
         function displayError(message, guessNumber) {
             const tableBody = document.querySelector(`#output${guessNumber} tbody`);
-            tableBody.innerHTML = ''; // Clear previous results
+            tableBody.innerHTML = '';
             const row = tableBody.insertRow();
             const cell = row.insertCell();
             cell.colSpan = 5;
